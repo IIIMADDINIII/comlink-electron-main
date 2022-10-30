@@ -1,0 +1,40 @@
+{
+  "name": "comlink-electron-main",
+  "version": "0.0.1",
+  "description": "A wrapper around Comlink to make it work on the main process on electron",
+  "exports": {
+    "import": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    },
+    "require": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "rollup --config rollup.config.ts --configPlugin typescript"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IIIMADDINIII/comlink-electron-main.git"
+  },
+  "author": "IIIMADDINIII",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/IIIMADDINIII/comlink-electron-main/issues"
+  },
+  "homepage": "https://github.com/IIIMADDINIII/comlink-electron-main#readme",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.1.0",
+    "@rollup/plugin-typescript": "^9.0.2",
+    "rollup": "^3.2.3",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "electron": "^21.2.0"
+  }
+}
