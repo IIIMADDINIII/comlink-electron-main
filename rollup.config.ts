@@ -8,11 +8,11 @@ export default defineConfig({
   output: [{
     file: "./dist/index.cjs",
     format: "commonjs",
-    sourcemap: "inline",
+    sourcemap: true,
   }, {
     file: "./dist/index.mjs",
     format: "esm",
-    sourcemap: "inline",
+    sourcemap: true,
   }],
   external: ["comlink", "electron"],
   plugins: [typescript({ noEmitOnError: true }), nodeResolve(), terser()],
