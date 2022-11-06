@@ -9,7 +9,8 @@ $ npm install --save comlink-electron-main
 
 ## Differences to comlink
 Because of some limitations and differences in api, comlink is not compatible with electron.
-I tried to make a wrapper around endpoint, but this can not support all features (mainly comlink.createEndpoint is impossible).
+Electron only supports MessagePorts to be transfererd between main and renderer Process.
+So because at the moment it is not checked, if the MessagePort is connected with the main Process, only MessagePort is allowed in transferables.
 
 ## API
 

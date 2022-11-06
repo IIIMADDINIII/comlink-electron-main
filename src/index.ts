@@ -500,7 +500,7 @@ function fromWireValue(value: WireValue): any {
 function requestResponseMessage(
   ep: MessagePortMain,
   msg: Message,
-  transfers?: MessagePortMain[]
+  transfers: MessagePortMain[] = []
 ): Promise<WireValue> {
   return new Promise((resolve) => {
     const id = generateUUID();
