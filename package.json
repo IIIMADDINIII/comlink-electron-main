@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/IIIMADDINIII/comlink-electron-main.git"
   },
-  "author": "IIIMADDINIII",
+  "author": "IIIMADDINIII <martin@elend.name>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/IIIMADDINIII/comlink-electron-main/issues"
