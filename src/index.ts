@@ -342,7 +342,7 @@ export function expose(obj: any, ep: MessagePortMain) {
 }
 
 function isMessagePort(endpoint: unknown): endpoint is MessagePortMain {
-  return typeof endpoint === "object" && endpoint !== null && endpoint.constructor.name === "MessagePort";
+  return typeof endpoint === "object" && endpoint !== null && endpoint.constructor.name === "MessagePortMain";
 }
 
 function closeEndPoint(endpoint: MessagePortMain) {

@@ -1,7 +1,7 @@
 # comlink-electron-main
 
 An port of the popular library [comlink](https://github.com/GoogleChromeLabs/comlink) by Surma for electron main process.
-A compatible implementation for the render process is available at [comlink-electron-renderer](ToDo).
+A compatible implementation for the render process is available at [comlink-electron-renderer](https://github.com/IIIMADDINIII/comlink-electron-renderer).
 
 ```
 $ npm install --save comlink-electron-main
