@@ -2,6 +2,7 @@ import { MessageChannelMain, MessageEvent, MessagePortMain } from "electron";
 import {
   Message,
   MessageType,
+  Sendable,
   WireValue,
   WireValueType,
 } from "./protocol";
@@ -170,7 +171,7 @@ const isObject = (val: unknown): val is object =>
  * @template T The input type being handled by this transfer handler.
  * @template S The serialized type sent over the wire.
  */
-export interface TransferHandler<T, S> {
+export interface TransferHandler<T, S extends Sendable> {
   /**
    * Gets called for every value to determine whether this transfer handler
    * should serialize the value, which includes checking that it is of the right
@@ -190,21 +191,24 @@ export interface TransferHandler<T, S> {
    * other thread with this transfer handler (known through the name it was
    * registered under).
    */
-  deserialize(value: S): T;
+  deserialize(value: S, ports: MessagePortMain[]): T;
 }
 
 /**
  * Internal transfer handle to handle objects marked to proxy.
  */
-const proxyTransferHandler: TransferHandler<object, MessagePortMain> = {
+const proxyTransferHandler: TransferHandler<object, 0> = {
   canHandle: (val): val is ProxyMarked =>
     isObject(val) && (val as ProxyMarked)[proxyMarker],
   serialize(obj) {
     const { port1, port2 } = new MessageChannelMain();
     expose(obj, port1);
-    return [port2, [port2]];
+    return [0, [port2]];
   },
-  deserialize(port) {
+  deserialize(_value, ports) {
+    console.log(_value, ports);
+    let port = ports[0];
+    if (!port) throw new Error("Did not receive a MessagePort!");
     port.start();
     return wrap(port);
   },
@@ -212,11 +216,11 @@ const proxyTransferHandler: TransferHandler<object, MessagePortMain> = {
 
 interface ThrownValue {
   [throwMarker]: unknown; // just needs to be present
-  value: unknown;
+  value: Sendable;
 }
 type SerializedThrownValue =
-  | { isError: true; value: Error; }
-  | { isError: false; value: unknown; };
+  | { isError: true; value: { message: string, name: string, stack?: string; }; }
+  | { isError: false; value: Sendable; };
 
 /**
  * Internal transfer handler to handle thrown exceptions.
@@ -259,7 +263,7 @@ const throwTransferHandler: TransferHandler<
  */
 export const transferHandlers = new Map<
   string,
-  TransferHandler<unknown, unknown>
+  TransferHandler<unknown, Sendable>
 >([
   ["proxy", proxyTransferHandler],
   ["throw", throwTransferHandler],
@@ -267,74 +271,80 @@ export const transferHandlers = new Map<
 
 export function expose(obj: any, ep: MessagePortMain) {
   ep.on("message", function callback(ev: MessageEvent) {
-    if (!ev || !ev.data) {
-      return;
-    }
-    const { id, type, path } = {
-      path: [] as string[],
-      ...(ev.data as Message),
-    };
-    const argumentList = (ev.data.argumentList || []).map(fromWireValue);
-    let returnValue;
     try {
-      const parent = path.slice(0, -1).reduce((obj, prop) => obj[prop], obj);
-      const rawValue = path.reduce((obj, prop) => obj[prop], obj);
-      switch (type) {
-        case MessageType.GET:
-          {
-            returnValue = rawValue;
-          }
-          break;
-        case MessageType.SET:
-          {
-            let field = path.at(-1);
-            if (field === undefined) throw new Error("Only assignment of properties is allowed!");
-            parent[field] = fromWireValue(ev.data.value);
-            returnValue = true;
-          }
-          break;
-        case MessageType.APPLY:
-          {
-            returnValue = rawValue.apply(parent, argumentList);
-          }
-          break;
-        case MessageType.CONSTRUCT:
-          {
-            const value = new rawValue(...argumentList);
-            returnValue = proxy(value);
-          }
-          break;
-        case MessageType.ENDPOINT:
-          {
-            const { port1, port2 } = new MessageChannelMain();
-            expose(obj, port2);
-            returnValue = transfer(port1, [port1]);
-          }
-          break;
-        case MessageType.RELEASE:
-          {
-            returnValue = undefined;
-          }
-          break;
-        default:
-          return;
+      if (!ev || !ev.data) {
+        return;
       }
-    } catch (value) {
-      returnValue = { value, [throwMarker]: 0 };
-    }
-    Promise.resolve(returnValue)
-      .catch((value) => {
-        return { value, [throwMarker]: 0 };
-      })
-      .then((returnValue) => {
-        const [wireValue, transferables] = toWireValue(returnValue);
-        ep.postMessage({ ...wireValue, id }, transferables);
-        if (type === MessageType.RELEASE) {
-          // detach and deactive after sending release response above.
-          ep.off("message", callback as any);
-          closeEndPoint(ep);
+      const { id, type, path } = {
+        path: [] as string[],
+        ...(ev.data as Message),
+      };
+      //ToDo: Fix empty Array at fromWire Value. While sending arguments all transferable's must be assigned to a Argument
+      const argumentList = (ev.data.argumentList || []).map((v: WireValue) => fromWireValue([v, []]));
+      let returnValue;
+      try {
+        const parent = path.slice(0, -1).reduce((obj, prop) => obj[prop], obj);
+        const rawValue = path.reduce((obj, prop) => obj[prop], obj);
+        switch (type) {
+          case MessageType.GET:
+            {
+              returnValue = rawValue;
+            }
+            break;
+          case MessageType.SET:
+            {
+              let field = path.at(-1);
+              if (field === undefined) throw new Error("Only assignment of properties is allowed!");
+              parent[field] = fromWireValue([ev.data.value, ev.ports]);
+              returnValue = true;
+            }
+            break;
+          case MessageType.APPLY:
+            {
+              returnValue = rawValue.apply(parent, argumentList);
+            }
+            break;
+          case MessageType.CONSTRUCT:
+            {
+              const value = new rawValue(...argumentList);
+              returnValue = proxy(value);
+            }
+            break;
+          case MessageType.ENDPOINT:
+            {
+              const { port1, port2 } = new MessageChannelMain();
+              expose(obj, port2);
+              returnValue = transfer(port1, [port1]);
+            }
+            break;
+          case MessageType.RELEASE:
+            {
+              returnValue = undefined;
+            }
+            break;
+          default:
+            return;
         }
-      });
+      } catch (value) {
+        returnValue = { value, [throwMarker]: 0 };
+      }
+      Promise.resolve(returnValue)
+        .catch((value) => {
+          return { value, [throwMarker]: 0 };
+        })
+        .then((returnValue) => {
+          const [wireValue, transferables] = toWireValue(returnValue);
+          let message: Sendable = { ...wireValue, id };
+          ep.postMessage(message, transferables);
+          if (type === MessageType.RELEASE) {
+            // detach and deactive after sending release response above.
+            ep.off("message", callback as any);
+            closeEndPoint(ep);
+          }
+        });
+    } catch (e) {
+      console.log(e);
+    }
   } as any);
   if (ep.start) {
     ep.start();
@@ -488,10 +498,10 @@ function toWireValue(value: any): [WireValue, MessagePortMain[]] {
   ];
 }
 
-function fromWireValue(value: WireValue): any {
+function fromWireValue([value, ports]: [WireValue, MessagePortMain[]]): any {
   switch (value.type) {
     case WireValueType.HANDLER:
-      return transferHandlers.get(value.name)!.deserialize(value.value);
+      return transferHandlers.get(value.name)!.deserialize(value.value, ports);
     case WireValueType.RAW:
       return value.value;
   }
@@ -501,20 +511,25 @@ function requestResponseMessage(
   ep: MessagePortMain,
   msg: Message,
   transfers: MessagePortMain[] = []
-): Promise<WireValue> {
+): Promise<[WireValue, MessagePortMain[]]> {
   return new Promise((resolve) => {
     const id = generateUUID();
     ep.on("message", function l(ev: MessageEvent) {
-      if (!ev.data || !ev.data.id || ev.data.id !== id) {
-        return;
+      try {
+        if (!ev.data || !ev.data.id || ev.data.id !== id) {
+          return;
+        }
+        ep.off("message", l as any);
+        resolve([ev.data, ev.ports]);
+      } catch (e) {
+        console.log(e);
       }
-      ep.off("message", l as any);
-      resolve(ev.data);
     } as any);
     if (ep.start) {
       ep.start();
     }
-    ep.postMessage({ id, ...msg }, transfers);
+    let message: Sendable = { id, ...msg };
+    ep.postMessage(message, transfers);
   });
 }
 
