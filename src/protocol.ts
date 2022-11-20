@@ -34,6 +34,11 @@ export const enum MessageType {
   RELEASE = "RELEASE",
 };
 
+export type Argument = {
+  value: WireValue;
+  portCount: number;
+};
+
 export type GetMessage = {
   id?: MessageID;
   type: MessageType.GET;
@@ -51,14 +56,14 @@ export type ApplyMessage = {
   id?: MessageID;
   type: MessageType.APPLY;
   path: string[];
-  argumentList: WireValue[];
+  argumentList: Argument[];
 };
 
 export type ConstructMessage = {
   id?: MessageID;
   type: MessageType.CONSTRUCT;
   path: string[];
-  argumentList: WireValue[];
+  argumentList: Argument[];
 };
 
 export type EndpointMessage = {

@@ -1,5 +1,6 @@
 import { MessageChannelMain, MessageEvent, MessagePortMain } from "electron";
 import {
+  Argument,
   Message,
   MessageType,
   Sendable,
@@ -206,7 +207,6 @@ const proxyTransferHandler: TransferHandler<object, 0> = {
     return [0, [port2]];
   },
   deserialize(_value, ports) {
-    console.log(_value, ports);
     let port = ports[0];
     if (!port) throw new Error("Did not receive a MessagePort!");
     port.start();
@@ -279,8 +279,11 @@ export function expose(obj: any, ep: MessagePortMain) {
         path: [] as string[],
         ...(ev.data as Message),
       };
-      //ToDo: Fix empty Array at fromWire Value. While sending arguments all transferable's must be assigned to a Argument
-      const argumentList = (ev.data.argumentList || []).map((v: WireValue) => fromWireValue([v, []]));
+      let ports = [...ev.ports];
+      let argumentList: any[] = [];
+      for (let argument of (ev.data.argumentList || [])) {
+        argumentList.push(fromWireValue([argument.value, ports.splice(0, argument.portCount)]));
+      }
       let returnValue;
       try {
         const parent = path.slice(0, -1).reduce((obj, prop) => obj[prop], obj);
@@ -460,9 +463,9 @@ function myFlat<T>(arr: (T | T[])[]): T[] {
   return Array.prototype.concat.apply([], arr);
 }
 
-function processArguments(argumentList: any[]): [WireValue[], MessagePortMain[]] {
+function processArguments(argumentList: any[]): [Argument[], MessagePortMain[]] {
   const processed = argumentList.map(toWireValue);
-  return [processed.map((v) => v[0]), myFlat(processed.map((v) => v[1]))];
+  return [processed.map((v) => ({ value: v[0], portCount: v[1].length })), myFlat(processed.map((v) => v[1]))];
 }
 
 const transferCache = new WeakMap<any, MessagePortMain[]>();
