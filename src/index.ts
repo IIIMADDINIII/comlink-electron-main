@@ -5,7 +5,7 @@ import {
   MessageType,
   Sendable,
   WireValue,
-  WireValueType,
+  WireValueType
 } from "./protocol";
 
 export const proxyMarker = Symbol("Comlink.proxy");
@@ -298,7 +298,7 @@ export function expose(obj: any, ep: MessagePortMain) {
             {
               let field = path.at(-1);
               if (field === undefined) throw new Error("Only assignment of properties is allowed!");
-              parent[field] = fromWireValue([ev.data.value, ev.ports]);
+              parent[field] = fromWireValue([ev.data.value, ports]);
               returnValue = true;
             }
             break;
@@ -354,8 +354,10 @@ export function expose(obj: any, ep: MessagePortMain) {
   }
 }
 
-function isMessagePort(endpoint: unknown): endpoint is MessagePortMain {
-  return typeof endpoint === "object" && endpoint !== null && endpoint.constructor.name === "MessagePortMain";
+export const MessagePortMainCtor = new MessageChannelMain().port1.constructor;
+
+export function isMessagePort(endpoint: unknown): endpoint is MessagePortMain {
+  return endpoint instanceof MessagePortMainCtor;
 }
 
 function closeEndPoint(endpoint: MessagePortMain) {

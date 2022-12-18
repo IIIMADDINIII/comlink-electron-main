@@ -9,9 +9,10 @@ import * as fs from "fs";
 const packageJson = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), { encoding: "utf-8" }));
 const dependencies = packageJson.dependencies || {};
 const dependenciesList = Object.keys(dependencies);
+const externalPackages = [...dependenciesList, packageJson.name];
 
-function externalFilter(moduleName: string): boolean {
-  for (let dependency of dependenciesList) {
+function externalFilter(moduleName) {
+  for (let dependency of externalPackages) {
     if (moduleName === dependency) return true;
     if (moduleName.startsWith(dependency + "/")) return true;
   }
@@ -35,6 +36,5 @@ export default defineConfig({
     typescript({ noEmitOnError: true, outputToFilesystem: true }),
     sourceMaps(),
     nodeResolve(),
-    terser(),
   ],
 });
