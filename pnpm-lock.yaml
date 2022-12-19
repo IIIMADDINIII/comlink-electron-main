@@ -1,13 +1,20 @@
 lockfileVersion: 5.4
 
+patchedDependencies:
+  '@rollup/plugin-typescript@10.0.1':
+    hash: t7nzapywptz6wdiskbsfzbilmy
+    path: patches/@rollup__plugin-typescript@10.0.1.patch
+
 specifiers:
   '@rollup/plugin-commonjs': ^23.0.5
   '@rollup/plugin-node-resolve': ^15.0.1
   '@rollup/plugin-terser': ^0.1.0
   '@rollup/plugin-typescript': ^10.0.1
+  '@rollup/pluginutils': ^5.0.2
   '@types/node': ^18.11.16
   electron: '>=22.0.0'
   rollup: ^3.7.4
+  rollup-plugin-consts: ^1.1.0
   rollup-plugin-include-sourcemaps: ^0.7.0
   tslib: ^2.4.1
   typescript: ^4.9.4
@@ -19,9 +26,11 @@ devDependencies:
   '@rollup/plugin-commonjs': 23.0.5_rollup@3.7.4
   '@rollup/plugin-node-resolve': 15.0.1_rollup@3.7.4
   '@rollup/plugin-terser': 0.1.0_rollup@3.7.4
-  '@rollup/plugin-typescript': 10.0.1_ksuudmkloucy44p3irodiuckje
+  '@rollup/plugin-typescript': 10.0.1_t7nzapywptz6wdiskbsfzbilmy_ksuudmkloucy44p3irodiuckje
+  '@rollup/pluginutils': 5.0.2_rollup@3.7.4
   '@types/node': 18.11.16
   rollup: 3.7.4
+  rollup-plugin-consts: 1.1.0_rollup@3.7.4
   rollup-plugin-include-sourcemaps: 0.7.0_ls4xgd5pfeqwytei5pxjy7zdfq
   tslib: 2.4.1
   typescript: 4.9.4
@@ -131,7 +140,7 @@ packages:
       terser: 5.16.1
     dev: true
 
-  /@rollup/plugin-typescript/10.0.1_ksuudmkloucy44p3irodiuckje:
+  /@rollup/plugin-typescript/10.0.1_t7nzapywptz6wdiskbsfzbilmy_ksuudmkloucy44p3irodiuckje:
     resolution: {integrity: sha512-wBykxRLlX7EzL8BmUqMqk5zpx2onnmRMSw/l9M1sVfkJvdwfxogZQVNUM9gVMJbjRLDR5H6U0OMOrlDGmIV45A==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -150,6 +159,7 @@ packages:
       tslib: 2.4.1
       typescript: 4.9.4
     dev: true
+    patched: true
 
   /@rollup/pluginutils/5.0.2_rollup@3.7.4:
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
@@ -716,6 +726,14 @@ packages:
       sprintf-js: 1.1.2
     dev: false
     optional: true
+
+  /rollup-plugin-consts/1.1.0_rollup@3.7.4:
+    resolution: {integrity: sha512-RRFKQ/IGK7Rs9q4Tb/l/bnOy0jWJUX1AYGqKbxZsgKoz61Fd9lVEmmJ8ytYQJ5hvyC5t8w9niy2svjmScoF6iw==}
+    peerDependencies:
+      rollup: '>=1.15.0 <3'
+    dependencies:
+      rollup: 3.7.4
+    dev: true
 
   /rollup-plugin-include-sourcemaps/0.7.0_ls4xgd5pfeqwytei5pxjy7zdfq:
     resolution: {integrity: sha512-zAlN2IkFSaptlHhuWVROZ5xrviEULRSInN9AzETsBD++Ab5aMKAtXhDH2aRHbE2cRW6cVT9FFrAQHwZXxqDCIQ==}
