@@ -30,7 +30,6 @@ export const enum MessageType {
   SET = "SET",
   APPLY = "APPLY",
   CONSTRUCT = "CONSTRUCT",
-  ENDPOINT = "ENDPOINT",
   RELEASE = "RELEASE",
 };
 
@@ -66,11 +65,6 @@ export type ConstructMessage = {
   argumentList: Argument[];
 };
 
-export type EndpointMessage = {
-  id?: MessageID;
-  type: MessageType.ENDPOINT;
-};
-
 export type ReleaseMessage = {
   id?: MessageID;
   type: MessageType.RELEASE;
@@ -82,5 +76,4 @@ export type Message =
   | SetMessage
   | ApplyMessage
   | ConstructMessage
-  | EndpointMessage
   | ReleaseMessage;
