@@ -373,7 +373,7 @@ function createProxy<T>(
   path: (string | number | symbol)[] = []
 ): Remote<T> {
   let isProxyReleased = false;
-  const proxy = new Proxy({}, {
+  const proxy = new Proxy(function () { }, {
     get(_target, prop) {
       throwIfProxyReleased(isProxyReleased);
       if (prop === releaseProxy) {
