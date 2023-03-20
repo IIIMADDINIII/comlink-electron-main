@@ -68,7 +68,6 @@ export type ConstructMessage = {
 export type ReleaseMessage = {
   id?: MessageID;
   type: MessageType.RELEASE;
-  path: string[];
 };
 
 export type Message =

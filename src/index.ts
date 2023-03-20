@@ -277,7 +277,10 @@ export function expose(obj: unknown, ep: MessagePortMain) {
       if (!ev || !ev.data) {
         return;
       }
-      const { id, type, path } = ev.data as Message;
+      const { id, type, path } = {
+        path: [] as string[],
+        ...(ev.data as Message),
+      };
       let ports = [...ev.ports];
       let argumentList: unknown[] = [];
       for (let argument of (ev.data.argumentList || [])) {
@@ -368,6 +371,35 @@ function throwIfProxyReleased(isReleased: boolean) {
   }
 }
 
+// Global Variables for automatically closing Endpoints
+const finReg = new FinalizationRegistry(finalize);
+const finRegCount: Map<MessagePortMain, { value: number; }> = new Map();
+
+// is called each time a Proxy is Garbage Collected
+function finalize(ep: MessagePortMain) {
+  let count = finRegCount.get(ep);
+  if (count === undefined) return;
+  count.value--;
+  if (count.value > 0) return;
+  finRegCount.delete(ep);
+  return requestResponseMessage(ep, {
+    type: MessageType.RELEASE,
+  }).then(() => {
+    ep.close();
+  });
+}
+
+// create and increment Reference counter and register Garbage collection Callback
+function registerProxy(proxy: object, ep: MessagePortMain): void {
+  let count = finRegCount.get(ep);
+  if (count === undefined) {
+    count = { value: 0 };
+    finRegCount.set(ep, count);
+  }
+  count.value++;
+  finReg.register(proxy, ep);
+}
+
 function createProxy<T>(
   ep: MessagePortMain,
   path: (string | number | symbol)[] = []
@@ -380,7 +412,6 @@ function createProxy<T>(
         return () => {
           return requestResponseMessage(ep, {
             type: MessageType.RELEASE,
-            path: path.map((p) => p.toString()),
           }).then(() => {
             ep.close();
             isProxyReleased = true;
@@ -446,6 +477,7 @@ function createProxy<T>(
       ).then(fromWireValue);
     },
   });
+  registerProxy(proxy, ep);
   return <Remote<T>>proxy;
 }
 
