@@ -382,11 +382,10 @@ function finalize(ep: MessagePortMain) {
   count.value--;
   if (count.value > 0) return;
   finRegCount.delete(ep);
-  return requestResponseMessage(ep, {
-    type: MessageType.RELEASE,
-  }).then(() => {
+  requestResponseMessage(ep, { type: MessageType.RELEASE }).catch(console.error);
+  setTimeout(() => {
     ep.close();
-  });
+  }, 100);
 }
 
 // create and increment Reference counter and register Garbage collection Callback
